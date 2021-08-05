@@ -4,7 +4,12 @@
 #include "http_protocol.h"
 #include "http_log.h"
 
-#include <time.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+#include <json-c/json.h>
 
 module AP_MODULE_DECLARE_DATA twentyfirst_module;
 
@@ -19,7 +24,7 @@ static void *twentyfirst_create_dir_config(apr_pool_t *p, char *_dirname)
   return conf;
 }
 
-static void *twentyfirst_enable_dir_config(cmd_parms * cmd, void *mconfig, int flag)
+static const char *twentyfirst_enable_dir_config(cmd_parms *cmd, void *mconfig, int flag)
 {
   dir_config_t *dir_conf = (dir_config_t *)mconfig;
   dir_conf->enabled = flag;
@@ -33,20 +38,28 @@ static void *twentyfirst_create_config(apr_pool_t *p, server_rec *server)
 
 static int twentyfirst_handler(request_rec *r) {
   struct timespec buf;
-  int i;
-
   dir_config_t *dir_conf = ap_get_module_config(r->per_dir_config, &twentyfirst_module);
   if (!dir_conf->enabled)
     return DECLINED;
 
-  for (i = 0; i < 300; i++) {
-    (void) clock_gettime(CLOCK_REALTIME, &buf);
-    // ...buf の現在時刻を使ってキャッシュをどうこうする処理...
+  int i, ok = 0;
+  json_object *obj;
+  for (i = 0; i < 10; i++) {
+    int f = open("/etc/dummy-conf.json", O_RDONLY|O_CLOEXEC);
+    char buf[327680];
+    if (read(f, buf, 327680) != 0) {
+      obj = json_tokener_parse(buf);
+      ok = 1;
+    }
   }
 
   ap_set_content_type(r, "text/plain");
   ap_rprintf(r, "Welcome to 21stccs!\n");
-
+  if (ok == 1) {
+    ap_rprintf(r, "# JSON Loaded! %d\n", json_object_object_length(obj));
+    free(obj);
+  }
+    
   return OK;
 }
 
