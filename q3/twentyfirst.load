@@ -1,0 +1,5 @@
+LoadModule twentyfirst_module /usr/lib/apache2/modules/mod_twentyfirst.so
+
+<Location /21stccs>
+  twentyfirstEnabled On
+</Location>
