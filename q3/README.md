@@ -12,6 +12,7 @@ $ make
 $ sudo make install
 $ sudo cp twentyfirst.load /etc/apache2/mods-available/
 $ sudo a2enmod twentyfirst
+$ sudo systemctl restart apache2
 ```
 
 * このApacheのパス `/21stccs` に負荷をかけてそのワークロードの性質を検査してください。
